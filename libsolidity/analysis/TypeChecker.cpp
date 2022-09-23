@@ -1743,7 +1743,9 @@ bool TypeChecker::visit(UnaryOperation const& _operation)
 	else
 		_operation.annotation().type = result.get();
 	_operation.annotation().isConstant = false;
-	_operation.annotation().isPure = !modifying && *_operation.subExpression().annotation().isPure;
+	_operation.annotation().isPure =
+		!modifying &&
+		*_operation.subExpression().annotation().isPure;
 	_operation.annotation().isLValue = false;
 
 	return false;
@@ -3742,8 +3744,9 @@ void TypeChecker::endVisit(UsingForDirective const& _usingFor)
 			solAssert(m_errorReporter.hasErrors());
 			return;
 		}
-		solAssert(_usingFor.typeName()->annotation().type);
-		if (Declaration const* typeDefinition = _usingFor.typeName()->annotation().type->typeDefinition())
+		Type const* usingForType = _usingFor.typeName()->annotation().type;
+		solAssert(usingForType);
+		if (Declaration const* typeDefinition = usingForType->typeDefinition())
 		{
 			if (typeDefinition->scope() != m_currentSourceUnit)
 				m_errorReporter.typeError(
@@ -3777,10 +3780,12 @@ void TypeChecker::endVisit(UsingForDirective const& _usingFor)
 		return;
 	}
 
-	solAssert(_usingFor.typeName()->annotation().type);
+	Type const* usingForType = _usingFor.typeName()->annotation().type;
+	solAssert(usingForType);
+
 	Type const* normalizedType = TypeProvider::withLocationIfReference(
 		DataLocation::Storage,
-		_usingFor.typeName()->annotation().type
+		usingForType
 	);
 	solAssert(normalizedType);
 
@@ -3811,7 +3816,7 @@ void TypeChecker::endVisit(UsingForDirective const& _usingFor)
 				3100_error,
 				path->location(),
 				"The function \"" + joinHumanReadable(path->path(), ".") + "\" "+
-				"cannot be bound to the type \"" + _usingFor.typeName()->annotation().type->canonicalName() +
+				"cannot be bound to the type \"" + usingForType->canonicalName() +
 				"\" because the type cannot be implicitly converted to the first argument" +
 				" of the function (\"" + functionType->selfType()->humanReadableName() + "\")" +
 				(
